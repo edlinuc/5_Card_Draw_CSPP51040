@@ -15,7 +15,6 @@ typedef struct hand_ {
 
 typedef struct deck_ {
   Queue *q;
-  int size;
 } Deck;
 
 typedef struct player_ {

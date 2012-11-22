@@ -26,7 +26,7 @@ void list_destroy(List *list);
    time operation. If not, it will need to be O(n) searched first.*/
 int list_ins_next(List *list, ListElmt *element, const void *data);
 /* remove ListElmt after element and assigns data pointer to ListElmt data */
-int list_rem_next(List *list, ListElmt *element, const void **data);
+int list_rem_next(List *list, ListElmt *element, void **data);
 
 /* accessor functions done as macros to minimize cost of frequent access
    on the one hand and to add a little abstraction on the other */
