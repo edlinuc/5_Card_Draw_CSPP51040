@@ -27,3 +27,5 @@ void deck_init(Deck *deck);
 void deck_shuffle(Deck *deck);
 void deck_deal(Deck *deck, Player *player);
 void deck_display(Deck *deck);
+
+void players_init(Player *player);

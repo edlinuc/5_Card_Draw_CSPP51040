@@ -5,6 +5,7 @@
 *****************************************************************************/
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "list.h"
@@ -184,13 +185,12 @@ if (element == NULL) {
    *data = list->head->data;
    old_element = list->head;
    list->head = list->head->next;
-
    if (list_size(list) == 1)
-      list->tail = NULL;
+     list->tail = NULL;
+   
+ }
 
-   }
-
-else {
+ else {
 
    /**************************************************************************
    *                                                                         *
@@ -208,7 +208,7 @@ else {
    if (element->next == NULL)
       list->tail = element;
 
-}
+ }
 
 /*****************************************************************************
 *                                                                            *
@@ -216,7 +216,7 @@ else {
 *                                                                            *
 *****************************************************************************/
 
-free(old_element);
+ free(old_element);
 
 /*****************************************************************************
 *                                                                            *
@@ -224,8 +224,28 @@ free(old_element);
 *                                                                            *
 *****************************************************************************/
 
-list->size--;
+ list->size--;
 
-return 0;
+ return 0;
 
+}
+
+
+void list_print(List *list){
+  ListElmt *node = list_head(list);
+  if (list_size(list) == 0){
+    printf("[ ]\n");
+    return;
+  }
+  
+  printf("[ "); 
+  //printf("%d ", *(int *) node->data);
+  printf("(%d %d)", *((int*)node->data),*(((int*)node->data)+1));
+  while (node->next != NULL){
+    /* note that this "tostring" must be function ptr to make general */
+    node = node->next;
+    printf("(%d %d)", *((int*)node->data),*(((int*)node->data)+1));
+  }
+  printf(" ]\n"); 
+  return;
 }
