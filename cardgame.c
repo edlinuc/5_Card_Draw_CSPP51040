@@ -1,3 +1,4 @@
+#include <time.h>
 #include "cardgame.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -133,12 +134,8 @@ void deck_display(Deck *deck){
 
 void player_display(Player *player){
   int i;
-  char rank;
-  char *suit;
-  /*printf("%s's card:",player->name);*/
   for(i = 0; i < 5; ++i){
     card_print((player->hand->cards)[i]->suit, (player->hand->cards)[i]->rank);
-    //printf("(%d %d)",(player->hand->cards)[i]->suit, (player->hand->cards)[i]->rank);
   }
   printf("\n");
 }
@@ -185,7 +182,6 @@ void card_print(int suit, int rank){
     printf("(%s 10) ", suit_s);
   else
     printf("(%s %c) ", suit_s, rank_c);
-  //free(suit_s);
 }
 
 
@@ -237,10 +233,16 @@ void exchange_card(Card **card, Deck *deck){
   queue_dequeue(deck, (void**)card);
 }
 
+
+/* This function prompts the players including AI players for exchanging the cards */
 void prompt_for_exchange(Player *players, Deck *d){
   int i,j;
   char *choice;
+
+  /* choice is represented with a string of maximal length 5 */
   choice = malloc(6*sizeof(char));
+
+  /* first deals with AI players */
   for(i = 0; i < 4; ++i){
     if((players+i)->isAI == 1){
       printf("%s is thinking...\n",(players+i)->name);
@@ -249,32 +251,198 @@ void prompt_for_exchange(Player *players, Deck *d){
       player_display(players+i);
       printf("\n");
     }
+  }
+
+  /* prompt for exchange for the live player */
+  printf("********************************************************************************\n");
+  printf("   Your current hand:\n   ");
+  player_display(players);
+  printf("********************************************************************************\n");
+  printf("%s, please enter the card you want to exchange\n(e.g. To exchange the first card, enter 1; To exchange the second and the fifth card, enter 25;\nIf you do not want to exchange any card, enter 0):",(players)->name);
+  scanf("%s",choice);
+  if(strcmp(choice,"0") != 0){
+    for(j = 0; j < strlen(choice); ++j){
+      exchange_card(&((players)->hand->cards[choice[j]-'0'-1]),d);
+    }
+    printf("Your hand after exchanging:\n");
+    player_display(players);
+    printf("\n");
+  }
+  else{
+    printf("No card exchanged for %s.\n",players->name);
+  }
+}
+
+int check_winner(Player *p){
+  int i,value,max = -1,winner = -1;
+  printf("Checking for winner...\n");
+  for(i = 0; i < 4; ++i){
+    value = hand_value((p+i)->hand);
+    if(value > max){
+      max = value;
+      winner = i;	  
+    }
+    if(i == 0){
+      printf("Your hand:");
+      player_display(p);
+    }
     else{
-      printf("Your current hand:");
-      player_display(players+i);
-      printf("%s, please enter the card you want to exchange\n(e.g. To exchange the first card, enter 1; To exchange the second and the fifth card, enter 25;\nIf you do not want to exchange any card, enter 0):",(players+i)->name);
-      scanf("%s",choice);
-      if(strcmp(choice,"0") == 0)
-	continue;
-      for(j = 0; j < strlen(choice); ++j){
-	exchange_card(&((players+i)->hand->cards[choice[j]-'0'-1]),d);
-      }
-      printf("Your hand after exchanging:");
-      player_display(players+i);
-      printf("\n");
+      printf("Player %d's hand: ",i);
+      player_display(p+i);
+    }
+  }
+  return winner;
+}
+
+int hand_value(Hand *hand){
+  int value, rank, class = -1, i, j, contiguous = 0;
+  int num_suits[4] = {0};
+  int num_ranks[13] = {0};
+
+  /* sort the hand by rank */
+  qsort(hand->cards, 5, sizeof(Card),card_rank_cmp);
+
+  for(i = 0; i < 5; ++i){
+    if(hand->cards[i]->suit == SPADES){
+      num_suits[SPADES]++;
+    }
+    if(hand->cards[i]->suit == HEARTS){
+      num_suits[HEARTS]++;
+    }
+    if(hand->cards[i]->suit == DIAMONDS){
+      num_suits[DIAMONDS]++;
+    }
+    if(hand->cards[i]->suit == CLUBS){
+      num_suits[CLUBS]++;
+    }
+    /* CREATE A ARRAY OF 13 INT AND STORE THE OCCURANCE OF EACH RANK IN THE ARRAY */
+    num_ranks[hand->cards[i]->rank]++;
+  }
+
+  /* Set rank to be the biggest card in the hand */
+  rank = hand->cards[0]->rank;
+
+  /* Check if the hand is contiguous */
+  contiguous = 1;
+  for(j = 0; j < 4; ++j){
+    if(hand->cards[j]->rank != hand->cards[j+1]->rank + 1)
+      contiguous = 0;
+  }
+
+  /* loop through the num_suits array to see whether all the cards are of the same suit */
+  for(i = 0; i < 4; ++i){
+    if(num_suits[i] == 5 && contiguous == 1){
+      if(rank == 12)
+	class = 10; /* 10 for royal flush */
+      else
+	class = 9; /* 9 for straight flush */
     }
   }
 
-}
+  /* check for four of a kind */
+  if( class == -1 ){
+    for(i = 0; i < 13; ++i){
+      if( num_ranks[i] == 4){
+	class = 8;
+	rank = i;
+      }
+    }
+  }
 
-void check_winner(Player *players){
-  
-}
+  /* check for full house */
+  if( class == -1 ){
+    int j ;
+    for(i = 0; i < 13; ++i){
+      if( num_ranks[i] == 3){
+	for(j = i+1; j < 13; ++j){
+	  if(num_ranks[j] == 2){
+	    class = 7;
+	    rank = i;
+	  }
+	}
+      }
+    }
+  }
 
-void hand_value(Hand *hand){
-  int value, rank, class;
+  /* check for flush */
+  if( class == -1 ){
+    for(i = 0; i < 4; ++i){
+      if(num_suits[i] == 5){
+	class = 6;
+      }
+    }
+  }
 
+  /* check for straight */
+  if( class == -1 ){
+    if(contiguous == 1)
+      class = 5;
+  }
+
+  /* check for three of a kind */
+  if( class == -1 ){
+    for(i = 0; i < 13; ++i){
+      if( num_ranks[i] == 3){
+	class = 4;
+	rank = i;
+      }
+    }
+  }
+
+
+  /* check for two pairs or one pair*/
+  if( class == -1 ){
+    int j;
+    for(i = 0; i < 13; ++i){
+      if( num_ranks[i] == 2){
+	for(j = i+1; j < 13; ++j){
+	  if(num_ranks[j] == 2){
+	    class = 3;
+	    rank = j;
+	    break;
+	  }
+	}
+	if(class == -1){
+	  class = 2;
+	  rank = i;	  
+	}
+      }
+    }
+  }
+
+  if( class == -1 ){
+    class = 1;
+  }
+
+  value = 13 * class + rank;
+  /*printf("Class = %d, Rank = %d, value = %d\n",class, rank, value);*/
+  hand->value = value;
+  return value;
 }
 
 void suggest(Hand *hand);
 
+
+/* compare function used by qsort based on the suit of the card */
+int card_suit_cmp(const void *c1, const void *c2){
+  Card *a = *(Card**)c1;
+  Card *b = *(Card**)c2;
+  if(a->suit > b->suit)
+    return 1;
+  else if(a->suit < b->suit)
+    return -1;
+  else
+    return 0;
+}
+
+/* compare function used by qsort based on the rank of the card */
+int card_rank_cmp(const void *c1, const void *c2){
+  Card *a = *(Card**)c1;
+  Card *b = *(Card**)c2;
+  if(a->rank > b->rank)
+    return -1;
+  else if(a->rank < b->rank)
+    return 1;
+  else
+    return 0;
+}
