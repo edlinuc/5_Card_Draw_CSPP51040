@@ -17,6 +17,8 @@ typedef struct card_ {
 typedef struct hand_ {
   Card *cards[5];
   int value;
+  int rank;
+  int class;
 } Hand;
 
 typedef struct player_ {
@@ -40,7 +42,7 @@ void deck_display(Deck *deck);
 
 /* Compute the hand value */
 int hand_value(Hand *hand);
-
+void hand_display(Hand *hand);
 /* print a card */
 void card_print(int suit, int rank);
 /* compare functions used by qsort */
@@ -59,5 +61,4 @@ void prompt_for_exchange(Player *players,Deck *d);
 /* Finds the winner based on their hand value */
 int check_winner(Player *players);
 /* make suggestion on which card(s) to exchange*/
-void suggest(Hand *hand);
-
+char* MC(Hand *hand);

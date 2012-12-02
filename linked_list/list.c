@@ -239,7 +239,7 @@ void list_print(List *list){
   }
   
   printf("[ "); 
-  //printf("%d ", *(int *) node->data);
+  /*printf("%d ", *(int *) node->data);*/
   printf("(%d %d)", *((int*)node->data),*(((int*)node->data)+1));
   while (node->next != NULL){
     /* note that this "tostring" must be function ptr to make general */

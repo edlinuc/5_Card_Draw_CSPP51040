@@ -5,7 +5,7 @@
 #include <string.h>
 void swap(char** a, char** b, int szblob);
 void KnuthShuffle(void** arr, int size, int szblob);
-
+int intcmp(const void *v1, const void *v2);
 
 /* This function initializes the deck of cards to 52.*/
 void deck_init(Deck *deck){
@@ -132,11 +132,57 @@ void deck_display(Deck *deck){
   free(tmp);
 }
 
+/* Display the hand of a player */
 void player_display(Player *player){
   int i;
   for(i = 0; i < 5; ++i){
     card_print((player->hand->cards)[i]->suit, (player->hand->cards)[i]->rank);
   }
+  printf("\n");
+}
+
+/*Display a hand */
+void hand_display(Hand *hand){
+  int i;
+  char *class_s = malloc(20*sizeof(char));
+
+  switch(hand->class){
+  case 1:
+    class_s = "High card";
+    break;
+  case 2:
+    class_s = "One pair";
+    break;
+  case 3:
+    class_s = "Two pair";
+    break;
+  case 4:
+    class_s = "Three of a kind";
+    break;
+  case 5:
+    class_s = "Straight";
+    break;
+  case 6:
+    class_s = "Flush";
+    break;
+  case 7:
+    class_s = "Full house";
+    break;
+  case 8:
+    class_s = "Four of a kind";
+    break;
+  case 9:
+    class_s = "Straight flush";
+    break;
+  case 10:
+    class_s = "Royal flush";
+    break;
+  }
+
+  for(i = 0; i < 5; ++i){
+    card_print((hand->cards)[i]->suit, (hand->cards)[i]->rank);
+  }
+  printf("[%s]",class_s);
   printf("\n");
 }
 
@@ -258,6 +304,7 @@ void prompt_for_exchange(Player *players, Deck *d){
   printf("   Your current hand:\n   ");
   player_display(players);
   printf("********************************************************************************\n");
+  MC(players->hand);
   printf("%s, please enter the card you want to exchange\n(e.g. To exchange the first card, enter 1; To exchange the second and the fifth card, enter 25;\nIf you do not want to exchange any card, enter 0):",(players)->name);
   scanf("%s",choice);
   if(strcmp(choice,"0") != 0){
@@ -284,24 +331,28 @@ int check_winner(Player *p){
     }
     if(i == 0){
       printf("Your hand:");
-      player_display(p);
+      hand_display(p->hand);
     }
     else{
       printf("Player %d's hand: ",i);
-      player_display(p+i);
+      hand_display((p+i)->hand);
     }
   }
   return winner;
 }
 
 int hand_value(Hand *hand){
-  int value, rank, class = -1, i, j, contiguous = 0;
+  int value, rank, class = -1, i, j, contiguous = 0,max = 0;
   int num_suits[4] = {0};
   int num_ranks[13] = {0};
-
+  int rank_arr[5];
   /* sort the hand by rank */
-  qsort(hand->cards, 5, sizeof(Card),card_rank_cmp);
+  for(i = 0; i < 5; ++i){
+    rank_arr[i] = hand->cards[i]->rank;
+  }
+  qsort(rank_arr, 5, sizeof(int),intcmp);
 
+  /* find the number of each suit */
   for(i = 0; i < 5; ++i){
     if(hand->cards[i]->suit == SPADES){
       num_suits[SPADES]++;
@@ -317,15 +368,17 @@ int hand_value(Hand *hand){
     }
     /* CREATE A ARRAY OF 13 INT AND STORE THE OCCURANCE OF EACH RANK IN THE ARRAY */
     num_ranks[hand->cards[i]->rank]++;
+    if(hand->cards[i]->rank>max)
+      max = hand->cards[i]->rank;
   }
 
   /* Set rank to be the biggest card in the hand */
-  rank = hand->cards[0]->rank;
+  rank = max;
 
   /* Check if the hand is contiguous */
   contiguous = 1;
   for(j = 0; j < 4; ++j){
-    if(hand->cards[j]->rank != hand->cards[j+1]->rank + 1)
+    if(rank_arr[j] != rank_arr[j+1] + 1)
       contiguous = 0;
   }
 
@@ -417,6 +470,8 @@ int hand_value(Hand *hand){
   value = 13 * class + rank;
   /*printf("Class = %d, Rank = %d, value = %d\n",class, rank, value);*/
   hand->value = value;
+  hand->class = class;
+  hand->rank = rank;
   return value;
 }
 
@@ -445,4 +500,36 @@ int card_rank_cmp(const void *c1, const void *c2){
     return 1;
   else
     return 0;
+}
+
+int intcmp(const void *v1, const void *v2)
+{
+  return (*(int *)v2 - *(int *)v1);
+}
+
+char* MC(Hand *hand){
+  int suit_tmp, rank_tmp, i,j,sum;
+
+  for(i = 0; i < 5; ++i){
+    sum = 0;
+
+    suit_tmp = hand->cards[i]->suit;
+    rank_tmp = hand->cards[i]->rank;
+
+    for(j = 0; j < 200000; ++j){
+    hand->cards[i]->suit = rand() % 4;
+    hand->cards[i]->rank = rand() % 13;
+    
+    sum += hand_value(hand);
+
+    /*printf("MC:EXG HAND #%d:",j);
+    hand_display(hand);
+    printf("\n");*/
+      
+    }
+    hand->cards[i]->suit = suit_tmp;
+    hand->cards[i]->rank = rank_tmp;
+    printf("Expected for exchanging card %d: %f\n",i,(float)sum/200000);
+  }
+    return NULL;
 }
