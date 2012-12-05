@@ -292,9 +292,10 @@ void prompt_for_exchange(Player *players, Deck *d){
   for(i = 0; i < 4; ++i){
     if((players+i)->isAI == 1){
       printf("%s is thinking...\n",(players+i)->name);
-      player_display(players+i);
-      exchange_card(&((players+i)->hand->cards[i]),d);
-      player_display(players+i);
+      hand_display((players+i)->hand);
+      parse_exchange(MC((players+i)->hand), (players+i)->hand, d);
+      /*exchange_card(&((players+i)->hand->cards[i]),d);*/
+      hand_display((players+i)->hand);
       printf("\n");
     }
   }
@@ -305,18 +306,24 @@ void prompt_for_exchange(Player *players, Deck *d){
   player_display(players);
   printf("********************************************************************************\n");
   MC(players->hand);
+
   printf("%s, please enter the card you want to exchange\n(e.g. To exchange the first card, enter 1; To exchange the second and the fifth card, enter 25;\nIf you do not want to exchange any card, enter 0):",(players)->name);
   scanf("%s",choice);
   if(strcmp(choice,"0") != 0){
-    for(j = 0; j < strlen(choice); ++j){
-      exchange_card(&((players)->hand->cards[choice[j]-'0'-1]),d);
-    }
+    parse_exchange(choice, players->hand, d);
     printf("Your hand after exchanging:\n");
     player_display(players);
     printf("\n");
   }
   else{
     printf("No card exchanged for %s.\n",players->name);
+  }
+}
+
+void parse_exchange(char *choice, Hand *hand, Deck *deck){
+  int j;
+  for(j = 0; j < strlen(choice); ++j){
+    exchange_card(&(hand->cards[choice[j]-'0'-1]),deck);
   }
 }
 
@@ -508,28 +515,135 @@ int intcmp(const void *v1, const void *v2)
 }
 
 char* MC(Hand *hand){
-  int suit_tmp, rank_tmp, i,j,sum;
+  int suit_tmp, rank_tmp, i,j,k,l,sum, max, maxi,redraw,iteration,dup_ctr;
+  char *choice = malloc(10*sizeof(char));
+  float result[100] = {0};
+
+  /* Set number of MC trials */
+  iteration = 5000;
 
   for(i = 0; i < 5; ++i){
     sum = 0;
-
+    dup_ctr = 0;
     suit_tmp = hand->cards[i]->suit;
     rank_tmp = hand->cards[i]->rank;
 
-    for(j = 0; j < 200000; ++j){
-    hand->cards[i]->suit = rand() % 4;
-    hand->cards[i]->rank = rand() % 13;
-    
-    sum += hand_value(hand);
+    for(j = 0; j < iteration; ++j){
 
-    /*printf("MC:EXG HAND #%d:",j);
-    hand_display(hand);
-    printf("\n");*/
+
+
+      /* for each card we randomly generated, check whether it is the same as one of the card that
+	 is already in the hand, if yes, discard the card and redraw another card until we have 
+	 something different than the other cards */
+
+      do{      
+	hand->cards[i]->suit = rand() % 4;
+	hand->cards[i]->rank = rand() % 13;
+	
+	redraw = 0;
+	/*for(l = 0; l < 5; ++l){
+	  if(l != i){
+	    if(hand->cards[i]->rank == hand->cards[l]->rank && hand->cards[i]->suit == hand->cards[l]->suit){
+	      redraw = 1;
+	    }
+	  }else{
+	    if(rank_tmp == hand->cards[l]->rank && suit_tmp == hand->cards[l]->suit){
+	      redraw = 1;
+	    }
+	  }
+	}
+	}while(redraw != 0);*/
+
+
+	if((rank_tmp == hand->cards[i]->rank && suit_tmp == hand->cards[i]->suit) || 
+	   check_duplication(hand) == 1){
+	  dup_ctr++;
+	  redraw = 1;
+	}
+      }while(redraw != 0);
+
+      sum += hand_value(hand);
+      
+      /*printf("MC:EXG HAND #%d:",j);
+	hand_display(hand);
+	printf("\n");*/
       
     }
     hand->cards[i]->suit = suit_tmp;
     hand->cards[i]->rank = rank_tmp;
-    printf("Expected for exchanging card %d: %f\n",i,(float)sum/200000);
+    printf("Expected for exchanging card %d: %f,dups:%d\n",i,(float)sum/iteration,dup_ctr);
+    result[i] = (float)sum/iteration;
   }
-    return NULL;
+  
+  for(i = 0; i < 5; ++i){
+    int suit_tmp2, rank_tmp2;
+    suit_tmp = hand->cards[i]->suit;
+    rank_tmp = hand->cards[i]->rank;
+
+    for(j = i+1; j < 5; ++j){
+    sum = 0;
+
+    suit_tmp2 = hand->cards[j]->suit;
+    rank_tmp2 = hand->cards[j]->rank;
+   
+    for(k = 0; k < iteration; ++k){
+      hand->cards[i]->suit = rand() % 4;
+      hand->cards[i]->rank = rand() % 13;
+      hand->cards[j]->suit = rand() % 4;
+      hand->cards[j]->rank = rand() % 13;
+      
+      sum += hand_value(hand);
+      
+    }
+    hand->cards[i]->suit = suit_tmp;
+    hand->cards[i]->rank = rank_tmp;
+    hand->cards[j]->suit = suit_tmp2;
+    hand->cards[j]->rank = rank_tmp2;
+    printf("Expected for exchanging card %d,%d: %f\n",i,j,(float)sum/iteration);
+    result[i*10+j] = (float)sum/iteration;
+    }
+  }
+  for(i = 0, max = 0; i < 100; ++i){
+    if(result[i] > max){
+      max = result[i];
+      maxi = i;
+    }
+  }
+  if(maxi<10)
+    maxi++;
+  else
+    maxi += 11;
+  sprintf(choice, "%d", maxi);
+  printf("Choosing %s..\n",choice);
+  return choice;
+}
+
+
+int check_duplication(Hand *hand){
+  /*  int rank_arr[5], suit_arr[5], i;
+
+  for(i = 0; i < 5; ++i){
+    rank_arr[i] = hand->cards[i]->rank;
+    suit_arr[i] = hand->cards[i]->suit;
+  }
+
+  qsort(rank_arr, 5, sizeof(int),intcmp);
+
+  for(i = 0; i < 4; ++i){
+
+    if(rank_arr[i] == rank_arr[i+1]){
+      
+    }
+      return 1;
+  }*/
+  int i,j;
+  for(i = 0; i < 5; ++i){
+    for(j = i+1; j < 5; ++j){
+      if(hand->cards[i]->rank == hand->cards[j]->rank && 
+	 hand->cards[i]->suit == hand->cards[j]->suit){
+	return 1;
+      }
+    }
+  }
+  return 0;
 }

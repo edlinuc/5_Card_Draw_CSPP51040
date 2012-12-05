@@ -38,21 +38,21 @@ int main(int argc, char **argv){
       printf("Dealing cards to players...\n\n");
       deck_deal(d, p);
 
+      /*
+      p->hand->cards[0]->rank = 12;
+      p->hand->cards[0]->suit = 2;
+      p->hand->cards[1]->rank = 11;
+      p->hand->cards[1]->suit = 1;
+      p->hand->cards[2]->rank = 10;
+      p->hand->cards[2]->suit = 1;
+      p->hand->cards[3]->rank = 9;
+      p->hand->cards[3]->suit = 1;
+      p->hand->cards[4]->rank = 8;
+      p->hand->cards[4]->suit = 1;
+      */
+
       prompt_for_exchange(p, d);
 
-      /*      
-      This block is for testing hand value
-      p->hand->cards[0]->rank = 11;
-      p->hand->cards[0]->suit = 1;
-      p->hand->cards[1]->rank = 13;
-      p->hand->cards[1]->suit = 0;
-      p->hand->cards[2]->rank = 3;
-      p->hand->cards[2]->suit = 2;
-      p->hand->cards[3]->rank = 7;
-      p->hand->cards[3]->suit = 1;
-      p->hand->cards[4]->rank = 10;
-      p->hand->cards[4]->suit = 0;
-      */
       winner = check_winner(p);
       if(winner == 0){
 	printf("You won!\n");

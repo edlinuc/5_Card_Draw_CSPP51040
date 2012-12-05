@@ -56,9 +56,12 @@ void player_display(Player *player);
 
 /* Exchange the card with a new card from the deck */
 void exchange_card(Card **card, Deck *deck);
+
+void parse_exchange(char *choice, Hand *hand, Deck *deck);
 /* prompt for the player to exchange card(s) */
 void prompt_for_exchange(Player *players,Deck *d);
 /* Finds the winner based on their hand value */
 int check_winner(Player *players);
+int check_duplication(Hand *hand);
 /* make suggestion on which card(s) to exchange*/
 char* MC(Hand *hand);
