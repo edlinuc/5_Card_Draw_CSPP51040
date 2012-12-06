@@ -31,7 +31,7 @@ typedef struct player_ {
 } Player;
 
 /* Display the welcome message */
-void welcome(int firstgame,Player *p);
+void welcome(int firstgame,Player *p,int *round);
 
 /* Initialize the deck in order. After this function,
    the deck will have all 52 cards in order. */

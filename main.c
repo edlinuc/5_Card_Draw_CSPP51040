@@ -2,12 +2,12 @@
 #include <stdio.h>
 
 int main(int argc, char **argv){
-  int winner,godmode,firstgame = 1,chip,bet_sum,iteration;
+  int winner,godmode,firstgame = 1,chip,bet_sum,iteration, round = 1;
   char c = ' ';
   char *name = malloc(50);
   Deck *d = malloc(sizeof(Deck));
   Player p[4];
-  welcome(firstgame,p);
+  welcome(firstgame,p,&round);
   while((c = getchar()) != 'q'){
     switch(c){
     case '1':
@@ -59,9 +59,10 @@ int main(int argc, char **argv){
       printf("Dealing cards to players...\n\n");
       deck_deal(d, p);
 
+      /*For testing, the below block will give the live player a royal flush */
       /*
       p->hand->cards[0]->rank = 12;
-      p->hand->cards[0]->suit = 2;
+      p->hand->cards[0]->suit = 1;
       p->hand->cards[1]->rank = 11;
       p->hand->cards[1]->suit = 1;
       p->hand->cards[2]->rank = 10;
@@ -70,7 +71,8 @@ int main(int argc, char **argv){
       p->hand->cards[3]->suit = 1;
       p->hand->cards[4]->rank = 8;
       p->hand->cards[4]->suit = 1;
-      */      
+      */
+
       bet_sum = 0;
       bet_sum = prompt_for_exchange(p, d, godmode,iteration);
       printf("********************************************************************************\n");
@@ -80,14 +82,17 @@ int main(int argc, char **argv){
 	p->chip += bet_sum;
       }
       else{
-	printf("You lost, winner is player %d.", winner);
+	if(!p->fold)
+	  printf("You lost. ");
+	printf("winner was player %d.", winner);
 	printf("\n");
 	(p+winner)->chip += bet_sum;
       }
       printf("********************************************************************************\n");
       getchar();
 
-      welcome(firstgame,p);
+      welcome(firstgame,p,&round);
   }
+  printf("Bye!\n");
   return 0;
 }

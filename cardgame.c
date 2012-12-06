@@ -42,8 +42,13 @@ void players_init(Player *player, char *name,int chip){
 
     /* give every player initial chips */
     player[i].chip = chip;
+
+    /* Make every player alive at the beginning of the game */
     player[i].alive = 1;
+
+    /* This indicates in each round whether a player folds or not */
     player[i].fold = 0;
+
     /* Initiazlize the space for store poker hand for each player */
     player[i].hand = malloc(sizeof(Hand));
     for(j = 0; j < 5; ++j){
@@ -190,6 +195,8 @@ void hand_display(Hand *hand){
   printf("\n");
 }
 
+
+/* This function prints a card */
 void card_print(int suit, int rank){
   char *suit_s = malloc(10*sizeof(char));
   char rank_c;
@@ -234,9 +241,10 @@ void card_print(int suit, int rank){
     printf("(%s %c) ", suit_s, rank_c);
 }
 
-
-void welcome(int firstgame,Player *p){
+/* Display the welcome message to user based on whether this is the first time user enters the game or it is a coutinued round */
+void welcome(int firstgame,Player *p, int *round){
   int i;
+  /* If this is the first game, display banner */
   if(firstgame){
   printf("\n");
   printf("                    ___                                  ___      \n");
@@ -274,15 +282,21 @@ void welcome(int firstgame,Player *p){
   printf("                               \\__\\/         \\__\\/         \\__\\/     \n");
   printf("                              Made by Shuoyuan Lin for CSPP51040. Nov, 2012\n");
   printf("Welcome to FIVE-CARD-DRAW\n");
+
   }else{
+    /* Display the remaining chips for each players */
+    printf("\n                            FIVE-CARD-DRAW Round %d\n", ++(*round));
+    printf("********************************************************************************\n");
     for(i = 0; i < 4; ++i){
       if((p+i)->alive){
 	printf("%s's remaining chip: %d.\n",(p+i)->name, (p+i)->chip);
       }
       (p+i)->fold = 0;
       if((p+i)->chip == 0){
+	/* set alive to false if a player has run out of chips */
 	(p+i)->alive = 0;
 	if(i == 0){
+	  /* If the live player runs out of chips, end the game */
 	  printf("You have used all your chips, come back later, BYE!\n");
 	  exit(0);
 	}
@@ -311,7 +325,8 @@ int prompt_for_exchange(Player *players, Deck *d, int godmode, int iteration){
   bet_sum = 0;
   /* first deals with AI players */
   for(i = 0; i < 4; ++i){
-    if((players+i)->isAI == 1){
+    /* prompt for players if he/she is an alive AI player */
+    if((players+i)->isAI == 1 && (players+i)->alive == 1){
       printf("%s is thinking...\n",(players+i)->name);
 
       if(godmode == 1){
@@ -319,7 +334,7 @@ int prompt_for_exchange(Player *players, Deck *d, int godmode, int iteration){
 	player_display(players+i);	
       }
 
-
+      /* use MC advisor to find out the best move */
       choice = MC((players+i)->hand,godmode,iteration);
       printf("\n%s decides to exchange card %s \n",(players+i)->name,choice);
       parse_exchange(choice, (players+i)->hand, d);
@@ -330,7 +345,7 @@ int prompt_for_exchange(Player *players, Deck *d, int godmode, int iteration){
       }
       printf("\n");
 
-
+      /* generate the bet for AI players based on their hand value plus some randome variations. */
       bet = hand_value((players+i)->hand) + rand() % 10 + i * 10;
 
       /* small chance of doubling */
@@ -343,6 +358,7 @@ int prompt_for_exchange(Player *players, Deck *d, int godmode, int iteration){
 	(players+i)->chip -= bet;
 	printf("[%s is betting %d on his/her hand.]\n\n", (players+i)->name, bet);
       }
+      /* Bet all the chips */
       else if(bet > (players+i)->chip && (players+i)->chip >= cur_bet){
 	bet = (players+i)->chip;
 	cur_bet = bet;
@@ -369,15 +385,20 @@ int prompt_for_exchange(Player *players, Deck *d, int godmode, int iteration){
 
   printf("%s, please enter the card you want to exchange\n(e.g. To exchange the first card, enter 1; To exchange the second and the fifth card, enter 25;\nIf you do not want to exchange any card, enter 0):",(players)->name);
   scanf("%s",choice);
+  /* if the player enters a string other than "0", parse the string and exchange the cards */
   if(strcmp(choice,"0") != 0){
     parse_exchange(choice, players->hand, d);
+  printf("********************************************************************************\n");
     printf("Your hand after exchanging:\n");
     player_display(players);
+  printf("********************************************************************************\n");
     printf("\n");
   }
+  /* no cards is exchanged if the player enters "0" */
   else{
     printf("No card exchanged for %s.\n",players->name);
   }
+  /* evaluate the value */
   hand_value((players)->hand);
   printf("Current highest bet: %d.\nPlease enter the amount you want to bet. (Enter 0 to fold)\n",cur_bet);
   scanf("%d",&bet);
@@ -597,6 +618,12 @@ char* MC(Hand *hand, int godmode, int iteration){
   int suit_tmp, rank_tmp, i,j,k,l,m,sum,maxi,redraw, suit_tmp2, rank_tmp2, suit_tmp3, rank_tmp3, suit_tmp4, rank_tmp4, suit_tmp5, rank_tmp5;
   float result[10000] = {0.0}, max, exp_all;
   char *choice = malloc(10*sizeof(char));
+
+  /* Handle the case of not swapping any card */
+  hand_value(hand);
+  if(godmode)
+    printf("Expected hand value for not exchanging any card : %d                          \n",hand->value);
+  result[0] = hand->value;
 
   /* Handle the case of swapping 1 cards */  
   for(i = 0; i < 5; ++i){
