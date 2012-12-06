@@ -25,10 +25,13 @@ typedef struct player_ {
   char *name;
   int isAI;
   Hand *hand;
+  int chip;
+  int alive;
+  int fold;
 } Player;
 
 /* Display the welcome message */
-void welcome(int firstgame);
+void welcome(int firstgame,Player *p);
 
 /* Initialize the deck in order. After this function,
    the deck will have all 52 cards in order. */
@@ -50,7 +53,7 @@ int card_suit_cmp(const void *c1, const void *c2);
 int card_rank_cmp(const void *c1, const void *c2);
 
 /* Initialize the players */
-void players_init(Player *player,char *name);
+void players_init(Player *player,char *name, int chip);
 /* Display a player's information */
 void player_display(Player *player);
 
@@ -59,9 +62,9 @@ void exchange_card(Card **card, Deck *deck);
 
 void parse_exchange(char *choice, Hand *hand, Deck *deck);
 /* prompt for the player to exchange card(s) */
-void prompt_for_exchange(Player *players,Deck *d,int godmode);
+int prompt_for_exchange(Player *players,Deck *d,int godmode, int iteration);
 /* Finds the winner based on their hand value */
 int check_winner(Player *players);
 int check_duplication(Hand *hand);
 /* make suggestion on which card(s) to exchange*/
-char* MC(Hand *hand,int godmode);
+char* MC(Hand *hand,int godmode,int iteration);

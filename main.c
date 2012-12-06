@@ -2,12 +2,12 @@
 #include <stdio.h>
 
 int main(int argc, char **argv){
-  int winner,godmode,firstgame = 1;
+  int winner,godmode,firstgame = 1,chip,bet_sum,iteration;
   char c = ' ';
   char *name = malloc(50);
   Deck *d = malloc(sizeof(Deck));
   Player p[4];
-  welcome(firstgame);
+  welcome(firstgame,p);
   while((c = getchar()) != 'q'){
     switch(c){
     case '1':
@@ -20,7 +20,17 @@ int main(int argc, char **argv){
     if(firstgame){
       printf("Please enter your name: ");
       scanf("%s",name);
-      firstgame = 0;      
+
+      printf("Please enter the number of iteration for the Monte-Carlo advisor(100000 recommended): ");
+      scanf("%d",&iteration);
+
+      printf("Please enter the initial chips for each player(1000 recommended): ");
+      scanf("%d",&chip);
+
+      /* Initialize four players */
+      printf("Creating players...\n");
+      players_init(p,name, chip);
+      firstgame = 0;   
     }
       printf("\n");
       printf("********************************************************************************\n");
@@ -28,9 +38,6 @@ int main(int argc, char **argv){
       /* Initialize the deck of 52 cards in order */
       printf("Creating deck..\n");
       deck_init(d);
-      /* Initialize four players */
-      printf("Creating players...\n");
-      players_init(p,name);
 
       if(godmode == 1){      
 	puts("Deck before shuffling:");
@@ -64,21 +71,23 @@ int main(int argc, char **argv){
       p->hand->cards[4]->rank = 8;
       p->hand->cards[4]->suit = 1;
       */      
-
-      prompt_for_exchange(p, d, godmode);
+      bet_sum = 0;
+      bet_sum = prompt_for_exchange(p, d, godmode,iteration);
       printf("********************************************************************************\n");
       winner = check_winner(p);
       if(winner == 0){
 	printf("You won!\n");
+	p->chip += bet_sum;
       }
       else{
 	printf("You lost, winner is player %d.", winner);
 	printf("\n");
+	(p+winner)->chip += bet_sum;
       }
       printf("********************************************************************************\n");
       getchar();
-      /*printf("1. Enter next round in regular game mode.\n2. Enter next round in god mode.\nq. quit the game.\n");*/
-      welcome(firstgame);
+
+      welcome(firstgame,p);
   }
   return 0;
 }
