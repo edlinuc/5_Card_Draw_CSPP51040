@@ -28,7 +28,7 @@ typedef struct player_ {
 } Player;
 
 /* Display the welcome message */
-void welcome();
+void welcome(int firstgame);
 
 /* Initialize the deck in order. After this function,
    the deck will have all 52 cards in order. */
@@ -59,9 +59,9 @@ void exchange_card(Card **card, Deck *deck);
 
 void parse_exchange(char *choice, Hand *hand, Deck *deck);
 /* prompt for the player to exchange card(s) */
-void prompt_for_exchange(Player *players,Deck *d);
+void prompt_for_exchange(Player *players,Deck *d,int godmode);
 /* Finds the winner based on their hand value */
 int check_winner(Player *players);
 int check_duplication(Hand *hand);
 /* make suggestion on which card(s) to exchange*/
-char* MC(Hand *hand);
+char* MC(Hand *hand,int godmode);
