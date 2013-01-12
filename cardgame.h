@@ -17,7 +17,9 @@ typedef struct card_ {
 typedef struct hand_ {
   Card *cards[5];
   int value;
+  /* the defining rank of the hand */
   int rank;
+  /* the class of the hand */
   int class;
 } Hand;
 

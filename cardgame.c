@@ -378,7 +378,9 @@ int prompt_for_exchange(Player *players, Deck *d, int godmode, int iteration){
   /* prompt for exchange for the live player */
   printf("********************************************************************************\n");
   printf("   Your current hand:\n   ");
-  player_display(players);
+  /*player_display(players);*/
+  hand_value(players->hand);
+  hand_display(players->hand);
   printf("********************************************************************************\n");
   choice = MC(players->hand,godmode,iteration);
   printf("\nMC simulator suggest exchanging card %s\n\n",choice);
@@ -388,10 +390,13 @@ int prompt_for_exchange(Player *players, Deck *d, int godmode, int iteration){
   /* if the player enters a string other than "0", parse the string and exchange the cards */
   if(strcmp(choice,"0") != 0){
     parse_exchange(choice, players->hand, d);
-  printf("********************************************************************************\n");
+    printf("********************************************************************************\n");
     printf("Your hand after exchanging:\n");
-    player_display(players);
-  printf("********************************************************************************\n");
+    /*player_display(players);*/
+    hand_value(players->hand);
+    hand_display(players->hand);
+
+    printf("********************************************************************************\n");
     printf("\n");
   }
   /* no cards is exchanged if the player enters "0" */
